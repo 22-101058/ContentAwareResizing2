@@ -32,12 +32,12 @@ namespace ContentAwareResize
     	return (0 <= i && i < Height) && (0 <= j && j < Width);
 	}
 
-	public void FindMinimum(int[,] energyMatrix, int Width, int Height, int cur_i, int cur_j, ref int min_i, ref int min_j) {
+	public void FindMinimum(ref Tuple<int, List<coord>>[,] dp, int Width, int Height, int cur_i, int cur_j, ref int min_i, ref int  min_j) {
 		int n1, n2, n3;
 
-		n1 = IsCorrect(Width, Height, cur_i - 1, cur_j - 1) ? energyMatrix[cur_i - 1, cur_j - 1] : int.MaxValue; // upper-left neighbor 
-		n2 = IsCorrect(Width, Height, cur_i - 1, cur_j) ? energyMatrix[cur_i - 1, cur_j] : int.MaxValue; // direct-above neighbor 
-		n3 = IsCorrect(Width, Height, cur_i - 1, cur_j + 1) ? energyMatrix[cur_i - 1, cur_j + 1] : int.MaxValue; // upper-right neighbor 
+		n1 = IsCorrect(Width, Height, cur_i - 1, cur_j - 1) ? dp[cur_i - 1, cur_j - 1].Item1 : int.MaxValue; // upper-left neighbor 
+		n2 = IsCorrect(Width, Height, cur_i - 1, cur_j) ? dp[cur_i - 1, cur_j].Item1 : int.MaxValue; // direct-above neighbor 
+		n3 = IsCorrect(Width, Height, cur_i - 1, cur_j + 1) ? dp[cur_i - 1, cur_j + 1].Item1 : int.MaxValue; // upper-right neighbor 
 
 		int min_n = n1;
 		min_i = cur_i - 1;
@@ -45,15 +45,17 @@ namespace ContentAwareResize
 		if (n2 < min_n)
 		{
 			min_n = n2;
-			min_j = cur_j;
+			min_j = cur_j;	
 		}
 
 		if (n3 < min_n)
 		{
 			min_n = n3;
-			min_j = cur_j + 1;	
+			min_j = cur_j + 1;
 		}
+			
 	}
+
 
 	public void Swap(ref int a, ref int b) {
 		int temp = a;
@@ -77,18 +79,19 @@ namespace ContentAwareResize
 			dp[0, j] = Tuple.Create(energyMatrix[0, j], new List<coord>());
 			dp[0, j].Item2.Add(new coord { row = 0, column = j });
 		}
-		int min_i = -1;
-		int min_j = -1;
+		
 		// build the dp matrix (tabulation)
 		for (int i = 1; i < Height; i++) { // starts from the 2nd row
 			for (int j = 0; j < Width; j++) {
 				// Find the cell that has the minimum energy of the 3 neighbors above the current cell
-				
-				FindMinimum(energyMatrix, Width, Height, i, j, ref min_i, ref min_j);
+				int min_i = -1 ;
+				int min_j = -1;
+				FindMinimum(ref dp, Width, Height, i, j, ref min_i, ref min_j);
 				dp[i, j] = Tuple.Create(dp[min_i, min_j].Item1 + energyMatrix[i, j], new List<coord>(dp[min_i, min_j].Item2));
 				dp[i, j].Item2.Add(new coord { row = i, column = j });
 			}
 		}
+
 
 		// find the minimum cost in the last row (the correct answer)
 		minSeamValue = dp[Height-1, 0].Item1;
